@@ -88,7 +88,15 @@ public class MethodUtilsTest {
         public static String bar(final Object o) {
             return "bar(Object)";
         }
-        
+
+        public static String bar(final String... s) {
+            return "bar(String...)";
+        }
+
+        public static String bar(final Integer i, final String... s) {
+            return "bar(int, String...)";
+        }
+
         public static void oneParameterStatic(final String s) {
             // empty
         }
@@ -121,7 +129,15 @@ public class MethodUtilsTest {
         public String foo(final Object o) {
             return "foo(Object)";
         }
-        
+
+        public String foo(final String... s) {
+            return "foo(String...)";
+        }
+
+        public String foo(final Integer i, final String... s) {
+            return "foo(int, String...)";
+        }
+
         public void oneParameter(final String s) {
             // empty
         }
@@ -237,7 +253,11 @@ public class MethodUtilsTest {
                 TestBean.class, "bar", NumberUtils.LONG_ONE));
         assertEquals("bar(double)", MethodUtils.invokeStaticMethod(
                 TestBean.class, "bar", NumberUtils.DOUBLE_ONE));
-        
+        assertEquals("bar(String...)", MethodUtils.invokeStaticMethod(
+                TestBean.class, "bar", "a", "b"));
+        assertEquals("bar(int, String...)", MethodUtils.invokeStaticMethod(
+                TestBean.class, "bar", NumberUtils.INTEGER_ONE, "a", "b"));
+
         try {
             MethodUtils.invokeStaticMethod(TestBean.class, "does_not_exist");
             fail("should throw NoSuchMethodException");
@@ -376,6 +396,10 @@ public class MethodUtilsTest {
                 singletonArray(Double.TYPE), singletonArray(Double.TYPE));
         expectMatchingAccessibleMethodParameterTypes(TestBean.class, "foo",
                 singletonArray(Double.TYPE), singletonArray(Double.TYPE));
+        expectMatchingAccessibleMethodParameterTypes(TestBean.class, "foo",
+                new Class[] {String.class, String.class}, new Class[] {String[].class});
+        expectMatchingAccessibleMethodParameterTypes(TestBean.class, "foo",
+                new Class[] {Integer.TYPE, String.class, String.class}, new Class[] {Integer.class, String[].class});
         expectMatchingAccessibleMethodParameterTypes(InheritanceBean.class, "testOne",
                 singletonArray(ParentObject.class), singletonArray(ParentObject.class));
         expectMatchingAccessibleMethodParameterTypes(InheritanceBean.class, "testOne",
@@ -491,6 +515,8 @@ public class MethodUtilsTest {
             final String methodName, final Class<?>[] requestTypes, final Class<?>[] actualTypes) {
         final Method m = MethodUtils.getMatchingAccessibleMethod(cls, methodName,
                 requestTypes);
+        assertNotNull("could not find any matches for " + methodName
+                + " (" + (requestTypes == null ? null : toString(requestTypes)) + ")", m);
         assertTrue(toString(m.getParameterTypes()) + " not equals "
                 + toString(actualTypes), Arrays.equals(actualTypes, m
                 .getParameterTypes()));

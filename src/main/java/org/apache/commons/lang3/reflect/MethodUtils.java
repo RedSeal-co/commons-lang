@@ -17,11 +17,7 @@
 package org.apache.commons.lang3.reflect;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
+import java.lang.reflect.*;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -342,7 +338,22 @@ public class MethodUtils {
             throw new NoSuchMethodException("No such accessible method: "
                     + methodName + "() on class: " + cls.getName());
         }
+        if (method.isVarArgs()) {
+            Class<?>[] methodParameterTypes = method.getParameterTypes();
+            args = getVarArgs(args, methodParameterTypes);
+        }
         return method.invoke(null, args);
+    }
+
+    static Object[] getVarArgs(Object[] args, Class<?>[] methodParameterTypes) {
+        Object[] newArgs = new Object[methodParameterTypes.length];
+        System.arraycopy(args, 0, newArgs, 0, methodParameterTypes.length - 1);
+        Class<?> varArgComponentType = methodParameterTypes[methodParameterTypes.length - 1].getComponentType();
+        int varArgLength = args.length - methodParameterTypes.length + 1;
+        Object varArgsArray = Array.newInstance(varArgComponentType, varArgLength);
+        newArgs[methodParameterTypes.length - 1] = varArgsArray;
+        System.arraycopy(args, methodParameterTypes.length - 1, varArgsArray, 0, varArgLength);
+        return newArgs;
     }
 
     /**
@@ -534,7 +545,7 @@ public class MethodUtils {
         final Method[] methods = cls.getMethods();
         for (final Method method : methods) {
             // compare name and parameters
-            if (method.getName().equals(methodName) && ClassUtils.isAssignable(parameterTypes, method.getParameterTypes(), true)) {
+            if (method.getName().equals(methodName) && isMatchingMethod(method, parameterTypes)) {
                 // get accessible version of method
                 final Method accessibleMethod = getAccessibleMethod(method);
                 if (accessibleMethod != null && (bestMatch == null || MemberUtils.compareParameterTypes(
@@ -549,6 +560,29 @@ public class MethodUtils {
             MemberUtils.setAccessibleWorkaround(bestMatch);
         }
         return bestMatch;
+    }
+
+    private static boolean isMatchingMethod(Method method, Class<?>[] parameterTypes) {
+        return isMatchingMethod(parameterTypes, method.getParameterTypes(), method.isVarArgs());
+    }
+
+    static boolean isMatchingMethod(Class<?>[] parameterTypes, Class<?>[] methodParameterTypes, boolean isVarArgs) {
+        if (isVarArgs) {
+            int i;
+            for (i = 0; i < methodParameterTypes.length - 1 && i < parameterTypes.length; i++) {
+                if (!ClassUtils.isAssignable(parameterTypes[i], methodParameterTypes[i])) {
+                    return false;
+                }
+            }
+            Class<?> varArgParameterType = methodParameterTypes[methodParameterTypes.length - 1].getComponentType();
+            for (; i < parameterTypes.length; i++) {
+                if (!ClassUtils.isAssignable(parameterTypes[i], varArgParameterType)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return ClassUtils.isAssignable(parameterTypes, methodParameterTypes, true);
     }
 
     /**
