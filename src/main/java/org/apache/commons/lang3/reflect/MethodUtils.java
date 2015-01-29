@@ -570,13 +570,13 @@ public class MethodUtils {
         if (isVarArgs) {
             int i;
             for (i = 0; i < methodParameterTypes.length - 1 && i < parameterTypes.length; i++) {
-                if (!ClassUtils.isAssignable(parameterTypes[i], methodParameterTypes[i])) {
+                if (!ClassUtils.isAssignable(parameterTypes[i], methodParameterTypes[i], true)) {
                     return false;
                 }
             }
             Class<?> varArgParameterType = methodParameterTypes[methodParameterTypes.length - 1].getComponentType();
             for (; i < parameterTypes.length; i++) {
-                if (!ClassUtils.isAssignable(parameterTypes[i], varArgParameterType)) {
+                if (!ClassUtils.isAssignable(parameterTypes[i], varArgParameterType, true)) {
                     return false;
                 }
             }
