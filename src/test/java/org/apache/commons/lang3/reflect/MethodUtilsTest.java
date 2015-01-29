@@ -191,6 +191,12 @@ public class MethodUtilsTest {
                 NumberUtils.LONG_ONE));
         assertEquals("foo(double)", MethodUtils.invokeMethod(testBean, "foo",
                 NumberUtils.DOUBLE_ONE));
+        assertEquals("foo(String...)", MethodUtils.invokeMethod(testBean, "foo",
+                "a", "b", "c"));
+        assertEquals("foo(String...)", MethodUtils.invokeMethod(testBean, "foo",
+                new String[]{"a", "b", "c"}));
+        assertEquals("foo(int, String...)", MethodUtils.invokeMethod(testBean, "foo",
+                5, new String[]{"a", "b", "c"}));
     }
 
     @Test

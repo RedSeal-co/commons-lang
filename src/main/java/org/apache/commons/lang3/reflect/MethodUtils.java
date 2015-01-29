@@ -152,6 +152,7 @@ public class MethodUtils {
                     + methodName + "() on object: "
                     + object.getClass().getName());
         }
+        args = toVarArgs(method, args);
         return method.invoke(object, args);
     }
 
@@ -338,14 +339,24 @@ public class MethodUtils {
             throw new NoSuchMethodException("No such accessible method: "
                     + methodName + "() on class: " + cls.getName());
         }
+        args = toVarArgs(method, args);
+        return method.invoke(null, args);
+    }
+
+    private static Object[] toVarArgs(Method method, Object[] args) {
         if (method.isVarArgs()) {
             Class<?>[] methodParameterTypes = method.getParameterTypes();
             args = getVarArgs(args, methodParameterTypes);
         }
-        return method.invoke(null, args);
+        return args;
     }
 
     static Object[] getVarArgs(Object[] args, Class<?>[] methodParameterTypes) {
+        if(args.length == methodParameterTypes.length
+                && args[args.length - 1].getClass().equals(methodParameterTypes[methodParameterTypes.length - 1])) {
+            return args;
+        }
+
         Object[] newArgs = new Object[methodParameterTypes.length];
         System.arraycopy(args, 0, newArgs, 0, methodParameterTypes.length - 1);
         Class<?> varArgComponentType = methodParameterTypes[methodParameterTypes.length - 1].getComponentType();
