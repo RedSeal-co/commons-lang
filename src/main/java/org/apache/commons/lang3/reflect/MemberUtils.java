@@ -118,6 +118,9 @@ abstract class MemberUtils {
             destClass = destArgs[i];
             totalCost += getObjectTransformationCost(srcClass, destClass);
         }
+        if (srcArgs.length < destArgs.length) {
+          totalCost += 0.001 * (destArgs.length - srcArgs.length);  // HACK by Jim Lloyd
+        }
         return totalCost;
     }
 

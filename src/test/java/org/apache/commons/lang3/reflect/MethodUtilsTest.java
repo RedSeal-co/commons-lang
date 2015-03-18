@@ -54,15 +54,15 @@ import org.junit.Test;
  * @version $Id$
  */
 public class MethodUtilsTest {
-  
+
     private static interface PrivateInterface {}
-    
+
     static class TestBeanWithInterfaces implements PrivateInterface {
         public String foo() {
             return "foo()";
         }
     }
-    
+
     public static class TestBean {
 
         public static String bar() {
@@ -175,7 +175,7 @@ public class MethodUtilsTest {
         assertEquals("foo()", MethodUtils.invokeMethod(testBean, "foo"));
         assertEquals("foo()", MethodUtils.invokeMethod(testBean, "foo",
                 (Object[]) null));
-        assertEquals("foo()", MethodUtils.invokeMethod(testBean, "foo", 
+        assertEquals("foo()", MethodUtils.invokeMethod(testBean, "foo",
                 (Object[]) null, (Class<?>[]) null));
         assertEquals("foo(String)", MethodUtils.invokeMethod(testBean, "foo",
                 ""));
@@ -194,9 +194,9 @@ public class MethodUtilsTest {
         assertEquals("foo(String...)", MethodUtils.invokeMethod(testBean, "foo",
                 "a", "b", "c"));
         assertEquals("foo(String...)", MethodUtils.invokeMethod(testBean, "foo",
-                new String[]{"a", "b", "c"}));
+                "a", "b", "c"));
         assertEquals("foo(int, String...)", MethodUtils.invokeMethod(testBean, "foo",
-                5, new String[]{"a", "b", "c"}));
+                5, "a", "b", "c"));
     }
 
     @Test
@@ -206,7 +206,7 @@ public class MethodUtilsTest {
         assertEquals("foo()", MethodUtils.invokeExactMethod(testBean, "foo"));
         assertEquals("foo()", MethodUtils.invokeExactMethod(testBean, "foo",
                 (Object[]) null));
-        assertEquals("foo()", MethodUtils.invokeExactMethod(testBean, "foo", 
+        assertEquals("foo()", MethodUtils.invokeExactMethod(testBean, "foo",
                 (Object[]) null, (Class<?>[]) null));
         assertEquals("foo(String)", MethodUtils.invokeExactMethod(testBean,
                 "foo", ""));
@@ -319,7 +319,7 @@ public class MethodUtilsTest {
             assertSame(Mutable.class, accessibleMethod.getDeclaringClass());
         }
     }
-    
+
     @Test
     public void testGetAccessibleMethodPrivateInterface() throws Exception {
         final Method expected = TestBeanWithInterfaces.class.getMethod("foo");
@@ -352,7 +352,7 @@ public class MethodUtilsTest {
                 MutableObject.class, "getValue", ArrayUtils.EMPTY_CLASS_ARRAY)
                 .getDeclaringClass());
     }
-    
+
     @Test
    public void testGetAccessibleMethodInaccessible() throws Exception {
         final Method expected = TestBean.class.getDeclaredMethod("privateStuff");
@@ -516,7 +516,7 @@ public class MethodUtilsTest {
     public void testGetMethodsListWithAnnotationIllegalArgumentException3() {
         MethodUtils.getMethodsListWithAnnotation(null, null);
     }
-    
+
     private void expectMatchingAccessibleMethodParameterTypes(final Class<?> cls,
             final String methodName, final Class<?>[] requestTypes, final Class<?>[] actualTypes) {
         final Method m = MethodUtils.getMatchingAccessibleMethod(cls, methodName,
@@ -549,8 +549,8 @@ public class MethodUtilsTest {
         public void testTwo(final GrandParentObject obj) {}
         public void testTwo(final ChildInterface obj) {}
     }
-    
-    interface ChildInterface {}    
+
+    interface ChildInterface {}
     public static class GrandParentObject {}
     public static class ParentObject extends GrandParentObject {}
     public static class ChildObject extends ParentObject implements ChildInterface {}
