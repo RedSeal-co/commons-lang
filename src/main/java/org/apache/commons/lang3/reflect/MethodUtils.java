@@ -43,10 +43,10 @@ import org.apache.commons.lang3.Validate;
  * Reflection locates these methods fine and correctly assigns them as {@code public}.
  * However, an {@link IllegalAccessException} is thrown if the method is invoked.</p>
  *
- * <p>{@link MethodUtils} contains a workaround for this situation. 
+ * <p>{@link MethodUtils} contains a workaround for this situation.
  * It will attempt to call {@link java.lang.reflect.AccessibleObject#setAccessible(boolean)} on this method.
  * If this call succeeds, then the method can be invoked as normal.
- * This call will only succeed when the application has sufficient security privileges. 
+ * This call will only succeed when the application has sufficient security privileges.
  * If this call fails then the method may fail.</p>
  *
  * @since 2.5
@@ -82,7 +82,7 @@ public class MethodUtils {
      * @throws NoSuchMethodException if there is no such accessible method
      * @throws InvocationTargetException wraps an exception thrown by the method invoked
      * @throws IllegalAccessException if the requested method is not accessible via reflection
-     *  
+     *
      *  @since 3.4
      */
     public static Object invokeMethod(final Object object, final String methodName) throws NoSuchMethodException,
@@ -95,7 +95,7 @@ public class MethodUtils {
      *
      * <p>This method delegates the method search to {@link #getMatchingAccessibleMethod(Class, String, Class[])}.</p>
      *
-     * <p>This method supports calls to methods taking primitive parameters 
+     * <p>This method supports calls to methods taking primitive parameters
      * via passing in wrapping classes. So, for example, a {@code Boolean} object
      * would match a {@code boolean} primitive.</p>
      *
@@ -125,7 +125,7 @@ public class MethodUtils {
      *
      * <p>This method delegates the method search to {@link #getMatchingAccessibleMethod(Class, String, Class[])}.</p>
      *
-     * <p>This method supports calls to methods taking primitive parameters 
+     * <p>This method supports calls to methods taking primitive parameters
      * via passing in wrapping classes. So, for example, a {@code Boolean} object
      * would match a {@code boolean} primitive.</p>
      *
@@ -172,7 +172,7 @@ public class MethodUtils {
      *  method invoked
      * @throws IllegalAccessException if the requested method is not accessible
      *  via reflection
-     *  
+     *
      *  @since 3.4
      */
     public static Object invokeExactMethod(final Object object, final String methodName) throws NoSuchMethodException,
@@ -278,7 +278,7 @@ public class MethodUtils {
      *
      * <p>This method delegates the method search to {@link #getMatchingAccessibleMethod(Class, String, Class[])}.</p>
      *
-     * <p>This method supports calls to methods taking primitive parameters 
+     * <p>This method supports calls to methods taking primitive parameters
      * via passing in wrapping classes. So, for example, a {@code Boolean} class
      * would match a {@code boolean} primitive.</p>
      *
@@ -310,7 +310,7 @@ public class MethodUtils {
      *
      * <p>This method delegates the method search to {@link #getMatchingAccessibleMethod(Class, String, Class[])}.</p>
      *
-     * <p>This method supports calls to methods taking primitive parameters 
+     * <p>This method supports calls to methods taking primitive parameters
      * via passing in wrapping classes. So, for example, a {@code Boolean} class
      * would match a {@code boolean} primitive.</p>
      *
@@ -523,13 +523,13 @@ public class MethodUtils {
 
     /**
      * <p>Finds an accessible method that matches the given name and has compatible parameters.
-     * Compatible parameters mean that every method parameter is assignable from 
+     * Compatible parameters mean that every method parameter is assignable from
      * the given parameters.
-     * In other words, it finds a method with the given name 
+     * In other words, it finds a method with the given name
      * that will take the parameters given.</p>
      *
-     * <p>This method is used by 
-     * {@link 
+     * <p>This method is used by
+     * {@link
      * #invokeMethod(Object object, String methodName, Object[] args, Class[] parameterTypes)}.
      * </p>
      *
@@ -540,7 +540,7 @@ public class MethodUtils {
      *
      * @param cls find method in this class
      * @param methodName find method with this name
-     * @param parameterTypes find method with most compatible parameters 
+     * @param parameterTypes find method with most compatible parameters
      * @return The accessible method
      */
     public static Method getMatchingAccessibleMethod(final Class<?> cls,
@@ -553,17 +553,22 @@ public class MethodUtils {
         }
         // search through all methods
         Method bestMatch = null;
+        boolean bestIsVarArgs = false;
         final Method[] methods = cls.getMethods();
         for (final Method method : methods) {
             // compare name and parameters
-            if (method.getName().equals(methodName) && isMatchingMethod(method, parameterTypes)) {
+            boolean methodIsVarArgs = method.isVarArgs();
+            if (method.getName().equals(methodName) && isMatchingMethod(method, parameterTypes, methodIsVarArgs)) {
                 // get accessible version of method
                 final Method accessibleMethod = getAccessibleMethod(method);
                 if (accessibleMethod != null && (bestMatch == null || MemberUtils.compareParameterTypes(
                             accessibleMethod.getParameterTypes(),
                             bestMatch.getParameterTypes(),
-                            parameterTypes) < 0)) {
+                            parameterTypes,
+                            methodIsVarArgs,
+                            bestIsVarArgs) < 0)) {
                         bestMatch = accessibleMethod;
+                        bestIsVarArgs = methodIsVarArgs;
                  }
             }
         }
@@ -573,8 +578,8 @@ public class MethodUtils {
         return bestMatch;
     }
 
-    private static boolean isMatchingMethod(Method method, Class<?>[] parameterTypes) {
-        return isMatchingMethod(parameterTypes, method.getParameterTypes(), method.isVarArgs());
+    private static boolean isMatchingMethod(Method method, Class<?>[] parameterTypes, boolean isVarArgs) {
+        return isMatchingMethod(parameterTypes, method.getParameterTypes(), isVarArgs);
     }
 
     static boolean isMatchingMethod(Class<?>[] parameterTypes, Class<?>[] methodParameterTypes, boolean isVarArgs) {

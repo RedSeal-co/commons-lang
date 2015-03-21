@@ -97,9 +97,9 @@ abstract class MemberUtils {
      * {@code left}/{@code right}
      * @return int consistent with {@code compare} semantics
      */
-    static int compareParameterTypes(final Class<?>[] left, final Class<?>[] right, final Class<?>[] actual) {
-        final float leftCost = getTotalTransformationCost(actual, left);
-        final float rightCost = getTotalTransformationCost(actual, right);
+    static int compareParameterTypes(final Class<?>[] left, final Class<?>[] right, final Class<?>[] actual, boolean leftIsVarArgs, boolean rightIsVarArgs) {
+        final float leftCost = getTotalTransformationCost(actual, left, leftIsVarArgs);
+        final float rightCost = getTotalTransformationCost(actual, right, rightIsVarArgs);
         return leftCost < rightCost ? -1 : rightCost < leftCost ? 1 : 0;
     }
 
@@ -110,16 +110,51 @@ abstract class MemberUtils {
      * @param destArgs The destination arguments
      * @return The total transformation cost
      */
-    private static float getTotalTransformationCost(final Class<?>[] srcArgs, final Class<?>[] destArgs) {
+    private static float getTotalTransformationCost(final Class<?>[] srcArgs, final Class<?>[] destArgs, boolean isVarArgs) {
+        // "source" and "destination" may seem ambiguous. If so, the think of them instead as
+        // "actual arguments" and "declared arguments", i.e actual is arguments being presented to
+        // a method, and "declared arguments" are the arguments of the method's declared signature.
+        // So "source"=="actual" and "destination"=="declared".
+        // When isVarArgs is false, both arrays should have the same length.
+        // When isVarArgs is true, the lengths may differ, but there are different cases to consider:
+        // src.length+1 == dest.length:
+        //    This can happen if no arguments were passed for the varargs parameter.
+        // src.length > dest.length:
+        //    A typical use of varargs where more than one argument is passed for the varargs parameter.
+        // src.length == dest.length && src is an array type whose base type matches the varargs array type
+        //    This is a case where an explicit array is passed for the varargs parameter
+        // src.length == dest.length && src is not an array type.
+        //    This may be a case where a single argument is passed for the varargs parameter
         float totalCost = 0.0f;
-        for (int i = 0; i < srcArgs.length; i++) {
-            Class<?> srcClass, destClass;
-            srcClass = srcArgs[i];
-            destClass = destArgs[i];
-            totalCost += getObjectTransformationCost(srcClass, destClass);
+        long normalArgsLen = isVarArgs ? destArgs.length-1 : destArgs.length;
+        if (srcArgs.length < normalArgsLen)
+            return Float.MAX_VALUE;   // this is actually logic error!
+        for (int i = 0; i < normalArgsLen; i++) {
+            totalCost += getObjectTransformationCost(srcArgs[i], destArgs[i]);
         }
-        if (srcArgs.length < destArgs.length) {
-          totalCost += 0.001 * (destArgs.length - srcArgs.length);  // HACK by Jim Lloyd
+        if (isVarArgs) {
+            Class<?> destClass = destArgs[destArgs.length-1].getComponentType();
+            if (destClass == null) {
+                return Float.MAX_VALUE;   // this is actually logic error!
+            }
+            if (srcArgs.length > destArgs.length) {
+                for (int i = destArgs.length-1; i < srcArgs.length; i++) {
+                    Class<?> srcClass = srcArgs[i];
+                    totalCost += getObjectTransformationCost(srcClass, destClass) + 0.01;
+                }
+            }
+            else if (srcArgs.length==destArgs.length) {
+                if (srcArgs[srcArgs.length-1].isArray()) {
+                    Class<?> sourceClass = srcArgs[srcArgs.length-1].getComponentType();
+                    totalCost += getObjectTransformationCost(sourceClass, destClass) + 0.01;
+                }
+                else {
+                    totalCost += getObjectTransformationCost(srcArgs[srcArgs.length-1], destClass) + 0.01;
+                }
+            }
+            else {
+                totalCost += 0.01;
+            }
         }
         return totalCost;
     }

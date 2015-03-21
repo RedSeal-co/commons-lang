@@ -141,6 +141,11 @@ public class MethodUtilsTest {
         public void oneParameter(final String s) {
             // empty
         }
+
+        public String foo(final Object... s) {
+            return "foo(Object...)";
+        }
+
     }
 
     private static class TestMutable implements Mutable<Object> {
@@ -166,6 +171,22 @@ public class MethodUtilsTest {
     @Test
     public void testConstructor() throws Exception {
         assertNotNull(MethodUtils.class.newInstance());
+    }
+
+    @Test
+    public void verifyJavaVarargsOverloadingResolution() throws Exception {
+        assertEquals("foo(int)", testBean.foo(1));
+        assertEquals("foo(String...)", testBean.foo("a", "b"));
+        assertEquals("foo(Object...)", testBean.foo(1, 2));
+        assertEquals("foo(Object...)", testBean.foo("a", 2));
+        assertEquals("foo(int, String...)", testBean.foo(1, "b"));
+
+        String[] bar = new String[]{"x", "y", "z"};
+        assertEquals("foo(String...)", testBean.foo(bar));
+
+        // Overloading uses the compile-time type, not the runtime type
+        Object[] baz = new String[]{"x", "y", "z"};
+        assertEquals("foo(Object...)", testBean.foo(baz));
     }
 
     @Test
