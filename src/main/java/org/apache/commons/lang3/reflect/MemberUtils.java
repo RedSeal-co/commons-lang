@@ -111,7 +111,7 @@ abstract class MemberUtils {
      * @return The total transformation cost
      */
     private static float getTotalTransformationCost(final Class<?>[] srcArgs, final Class<?>[] destArgs, boolean isVarArgs) {
-        // "source" and "destination" may seem ambiguous. If so, the think of them instead as
+        // "source" and "destination" may seem ambiguous. If so, then think of them instead as
         // "actual arguments" and "declared arguments", i.e actual is arguments being presented to
         // a method, and "declared arguments" are the arguments of the method's declared signature.
         // So "source"=="actual" and "destination"=="declared".
@@ -153,7 +153,9 @@ abstract class MemberUtils {
                 }
             }
             else {
-                totalCost += 0.01;
+              // No source arguments were provided for the vararg parameter.
+              // This means we want the most generic matching type, not the most specific.
+              totalCost += getObjectTransformationCost(destClass, Object.class) + 0.01;
             }
         }
         return totalCost;
