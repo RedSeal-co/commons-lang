@@ -271,7 +271,7 @@ public class ConstructorUtils {
                     MemberUtils.setAccessibleWorkaround(ctor);
                     if (result == null
                             || MemberUtils.compareParameterTypes(ctor.getParameterTypes(), result
-                                    .getParameterTypes(), parameterTypes) < 0) {
+                                    .getParameterTypes(), parameterTypes, ctor.isVarArgs(), result.isVarArgs()) < 0) {
                         // temporary variable for annotation, see comment above (1)
                         @SuppressWarnings("unchecked")
                         final

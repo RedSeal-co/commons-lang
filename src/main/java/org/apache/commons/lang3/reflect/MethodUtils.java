@@ -553,17 +553,22 @@ public class MethodUtils {
         }
         // search through all methods
         Method bestMatch = null;
+        boolean bestIsVarArgs = false;
         final Method[] methods = cls.getMethods();
         for (final Method method : methods) {
             // compare name and parameters
-            if (method.getName().equals(methodName) && isMatchingMethod(method, parameterTypes)) {
+            boolean methodIsVarArgs = method.isVarArgs();
+            if (method.getName().equals(methodName) && isMatchingMethod(method, parameterTypes, methodIsVarArgs)) {
                 // get accessible version of method
                 final Method accessibleMethod = getAccessibleMethod(method);
                 if (accessibleMethod != null && (bestMatch == null || MemberUtils.compareParameterTypes(
                             accessibleMethod.getParameterTypes(),
                             bestMatch.getParameterTypes(),
-                            parameterTypes) < 0)) {
+                            parameterTypes,
+                            methodIsVarArgs,
+                            bestIsVarArgs) < 0)) {
                         bestMatch = accessibleMethod;
+                        bestIsVarArgs = methodIsVarArgs;
                  }
             }
         }
@@ -573,8 +578,8 @@ public class MethodUtils {
         return bestMatch;
     }
 
-    private static boolean isMatchingMethod(Method method, Class<?>[] parameterTypes) {
-        return isMatchingMethod(parameterTypes, method.getParameterTypes(), method.isVarArgs());
+    private static boolean isMatchingMethod(Method method, Class<?>[] parameterTypes, boolean isVarArgs) {
+        return isMatchingMethod(parameterTypes, method.getParameterTypes(), isVarArgs);
     }
 
     static boolean isMatchingMethod(Class<?>[] parameterTypes, Class<?>[] methodParameterTypes, boolean isVarArgs) {

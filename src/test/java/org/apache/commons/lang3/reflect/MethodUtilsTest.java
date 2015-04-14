@@ -141,6 +141,34 @@ public class MethodUtilsTest {
         public void oneParameter(final String s) {
             // empty
         }
+
+        public String foo(final Object... s) {
+            return "foo(Object...)";
+        }
+
+        // This method is overloaded for the wrapper class for every primitive type, plus the common supertypes
+        // Number and Object. This is an acid test since it easily leads to ambiguous methods.
+        public static String varOverload(Byte... args) { return "Byte..."; }
+        public static String varOverload(Character... args) { return "Character..."; }
+        public static String varOverload(Short... args) { return "Short..."; }
+        public static String varOverload(Boolean... args) { return "Boolean..."; }
+        public static String varOverload(Float... args) { return "Float..."; }
+        public static String varOverload(Double... args) { return "Double..."; }
+        public static String varOverload(Integer... args) { return "Integer..."; }
+        public static String varOverload(Long... args) { return "Long..."; }
+        public static String varOverload(Number... args) { return "Number..."; }
+        public static String varOverload(Object... args) { return "Object..."; }
+        public static String varOverload(String... args) { return "String..."; }
+
+        // This method is overloaded for the wrapper class for every numeric primitive type, plus the common
+        // supertype Number
+        public static String numOverload(Byte... args) { return "Byte..."; }
+        public static String numOverload(Short... args) { return "Short..."; }
+        public static String numOverload(Float... args) { return "Float..."; }
+        public static String numOverload(Double... args) { return "Double..."; }
+        public static String numOverload(Integer... args) { return "Integer..."; }
+        public static String numOverload(Long... args) { return "Long..."; }
+        public static String numOverload(Number... args) { return "Number..."; }
     }
 
     private static class TestMutable implements Mutable<Object> {
@@ -166,6 +194,81 @@ public class MethodUtilsTest {
     @Test
     public void testConstructor() throws Exception {
         assertNotNull(MethodUtils.class.newInstance());
+    }
+
+    @Test
+    public void verifyJavaVarargsOverloadingResolution() throws Exception {
+        // This code is not a test of MethodUtils.
+        // Rather it makes explicit the behavior of the Java specification for
+        // various cases of overload resolution.
+        assertEquals("Byte...", TestBean.varOverload((byte) 1, (byte) 2));
+        assertEquals("Short...", TestBean.varOverload((short) 1, (short) 2));
+        assertEquals("Integer...", TestBean.varOverload(1, 2));
+        assertEquals("Long...", TestBean.varOverload(1L, 2L));
+        assertEquals("Float...", TestBean.varOverload(1f, 2f));
+        assertEquals("Double...", TestBean.varOverload(1d, 2d));
+        assertEquals("Character...", TestBean.varOverload('a', 'b'));
+        assertEquals("String...", TestBean.varOverload("a", "b"));
+        assertEquals("Boolean...", TestBean.varOverload(true, false));
+
+        assertEquals("Object...", TestBean.varOverload(1, "s"));
+        assertEquals("Object...", TestBean.varOverload(1, true));
+        assertEquals("Object...", TestBean.varOverload(1.1, true));
+        assertEquals("Object...", TestBean.varOverload('c', true));
+        assertEquals("Number...", TestBean.varOverload(1, 1.1));
+        assertEquals("Number...", TestBean.varOverload(1, 1L));
+        assertEquals("Number...", TestBean.varOverload(1d, 1f));
+        assertEquals("Number...", TestBean.varOverload((short) 1, (byte) 1));
+        assertEquals("Object...", TestBean.varOverload(1, 'c'));
+        assertEquals("Object...", TestBean.varOverload('c', "s"));
+    }
+
+    @Test
+    public void testInvokeJavaVarargsOverloadingResolution() throws Exception {
+        assertEquals("Byte...", MethodUtils.invokeStaticMethod(TestBean.class,
+                "varOverload", (byte) 1, (byte) 2));
+        assertEquals("Short...", MethodUtils.invokeStaticMethod(TestBean.class,
+                "varOverload", (short) 1, (short) 2));
+        assertEquals("Integer...", MethodUtils.invokeStaticMethod(TestBean.class,
+                "varOverload", 1, 2));
+        assertEquals("Long...", MethodUtils.invokeStaticMethod(TestBean.class,
+                "varOverload", 1L, 2L));
+        assertEquals("Float...", MethodUtils.invokeStaticMethod(TestBean.class,
+                "varOverload", 1f, 2f));
+        assertEquals("Double...", MethodUtils.invokeStaticMethod(TestBean.class,
+                "varOverload", 1d, 2d));
+        assertEquals("Character...", MethodUtils.invokeStaticMethod(TestBean.class,
+                "varOverload", 'a', 'b'));
+        assertEquals("String...", MethodUtils.invokeStaticMethod(TestBean.class,
+                "varOverload", "a", "b"));
+        assertEquals("Boolean...", MethodUtils.invokeStaticMethod(TestBean.class,
+                "varOverload", true, false));
+
+        assertEquals("Object...", MethodUtils.invokeStaticMethod(TestBean.class,
+                "varOverload", 1, "s"));
+        assertEquals("Object...", MethodUtils.invokeStaticMethod(TestBean.class,
+                "varOverload", 1, true));
+        assertEquals("Object...", MethodUtils.invokeStaticMethod(TestBean.class,
+                "varOverload", 1.1, true));
+        assertEquals("Object...", MethodUtils.invokeStaticMethod(TestBean.class,
+                "varOverload", 'c', true));
+        assertEquals("Number...", MethodUtils.invokeStaticMethod(TestBean.class,
+                "varOverload", 1, 1.1));
+        assertEquals("Number...", MethodUtils.invokeStaticMethod(TestBean.class,
+                "varOverload", 1, 1L));
+        assertEquals("Number...", MethodUtils.invokeStaticMethod(TestBean.class,
+                "varOverload", 1d, 1f));
+        assertEquals("Number...", MethodUtils.invokeStaticMethod(TestBean.class,
+                "varOverload", (short) 1, (byte) 1));
+        assertEquals("Object...", MethodUtils.invokeStaticMethod(TestBean.class,
+                "varOverload", 1, 'c'));
+        assertEquals("Object...", MethodUtils.invokeStaticMethod(TestBean.class,
+                "varOverload", 'c', "s"));
+
+        assertEquals("Object...", MethodUtils.invokeStaticMethod(TestBean.class, "varOverload",
+                (Object[]) ArrayUtils.EMPTY_CLASS_ARRAY));
+        assertEquals("Number...", MethodUtils.invokeStaticMethod(TestBean.class, "numOverload",
+                (Object[]) ArrayUtils.EMPTY_CLASS_ARRAY));
     }
 
     @Test
